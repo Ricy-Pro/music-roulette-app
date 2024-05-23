@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import{ Formik } from 'formik';
 import { View, Text, Image } from 'react-native';
 import {Octicons, Ionicons, Fontisto } from '@expo/vector-icons';
+import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper';
 import{
     StyledContainer,
     InnerContainer,
@@ -32,9 +33,10 @@ import{
 const {brand, darklight, primary} = Colors;
 
 
-const Login = () => {
+const Login = ({navigation}) => {
     const [hidePassword, setHidePassword] = useState(true);
     return(
+        <KeyboardAvoidingWrapper>
         <StyledContainer>
             <StatusBar style="dark" />
             <InnerContainer>
@@ -45,6 +47,7 @@ const Login = () => {
                     initialValues={{email: '', password: ''}}
                     onSubmit={(values) => {
                         console.log(values);
+                        navigation.navigate("Welcome");
                     }}>
                     {({handleChange, handleBlur, handleSubmit, values}) => (<StyledFormArea> 
                         <MyTextInput
@@ -89,18 +92,23 @@ const Login = () => {
                             </StyledButton>
                             <ExtraView>
                                 <ExtraText>Don't have an account already? </ExtraText>
-                                <TextLink>
+                                <TextLink onPress={() => navigation.navigate("Signup")}>
                                     <TextLinkContent>Signup</TextLinkContent>
                                 </TextLink>
                             </ExtraView>
 
-                    </StyledFormArea>)}
+                    </StyledFormArea>
+
+
+
+                )}
 
                         
                     
                 </Formik>
             </InnerContainer>
         </StyledContainer>
+        </KeyboardAvoidingWrapper>
     );
 }
 const MyTextInput = ({label, icon,isPassword, hidePassword, setHidePassword, ...props}) => {
