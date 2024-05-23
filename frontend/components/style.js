@@ -5,13 +5,13 @@ import Constants from 'expo-constants';
 const StatusBarHeight = Constants.statusBarHeight;
 
 export const Colors = {
-    primary: ['#FFC43D'],   // Blue Gradient
-    secondary: ['#E6E6EF'], // Gray Gradient
-    tertiary: ['#48A9A6'],  // Green Gradient
-    darklight: ['#562C2C'], // Dark Gray Gradient
-    brand: ['#562C2C'],     // Gray Gradient
-    green: ['#28a745', '#218838'],     // Green Gradient
-    red: ['#dc3545', '#c82333'],       // Red Gradient
+    primary: ['#FFC43D'],   
+    secondary: ['#E6E6EF'], 
+    tertiary: ['#48A9A6'],  
+    darklight: ['#562C2C'], 
+    brand: ['#562C2C'],     
+    green: ['#28a745'],    
+    red: ['#dc3545', '#c82333'],       
 };
 
 
@@ -100,10 +100,50 @@ export const StyledButton = styled.TouchableOpacity`
     border-radius: 5px;
     margin-vertical: 5px;
     height: 60px;
-    
+    ${props => props.google == true && `
+        background-color: ${green};
+        flex-direction: row;
+        justify-content: center;
+    `}
 `;
 
 export const ButtonText = styled.Text`
-    color: ${primary};
-    font-size: 16px;
+    color: ${({ google }) => (google ? primary : primary)}; /* Conditional text color */
+    font-size: 19px;
+    padding: ${({ google }) => (google ? '0 22px' : '0')}; /* Conditional padding */
+`;
+
+export const MsgBox = styled.Text`
+    text-align: center;
+    font-size: 13px;
+`;
+
+export const Line = styled.View`
+    height: 1px;
+    width: 100%;
+    background-color: ${darklight};
+    margin-vertical: 10px;
+`;
+export const ExtraView = styled.View`
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+`;
+
+export const ExtraText = styled.Text`
+    justify-content: center;
+    align-items: center;
+    color: ${darklight};
+    font-size: 15px;
+`;
+
+export const TextLink = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+`;
+
+export const TextLinkContent = styled.Text`
+    color: ${tertiary};
+    font-size: 15px;
 `;

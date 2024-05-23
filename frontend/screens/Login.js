@@ -2,7 +2,7 @@ import React, {useState, isPassword, setHidePassword, hidePassword} from 'react'
 import { StatusBar } from 'expo-status-bar';
 import{ Formik } from 'formik';
 import { View, Text, Image } from 'react-native';
-import {Octicons, Ionicons  } from '@expo/vector-icons';
+import {Octicons, Ionicons, Fontisto } from '@expo/vector-icons';
 import{
     StyledContainer,
     InnerContainer,
@@ -18,6 +18,13 @@ import{
     RightIcon,
     Colors,
     ButtonText,
+    MsgBox,
+    Line,
+    ExtraText,
+    ExtraView,
+    TextLink,
+    TextLinkContent,
+
     
 
 
@@ -64,14 +71,28 @@ const Login = () => {
                             isPassword={true}
                             hidePassword={hidePassword}
                             setHidePassword={setHidePassword}
-
-                            
                             />
+                            <MsgBox>...</MsgBox>
+
                             <StyledButton onPress={handleSubmit}>
                                 <ButtonText> 
                                     Login
                                 </ButtonText>
                             </StyledButton>
+                            <Line />
+
+                            <StyledButton google={true} onPress={handleSubmit}>
+                                <Fontisto name="google" color={primary} size={25} />
+                                <ButtonText google={true}> 
+                                    Sign in with Google
+                                </ButtonText>
+                            </StyledButton>
+                            <ExtraView>
+                                <ExtraText>Don't have an account already? </ExtraText>
+                                <TextLink>
+                                    <TextLinkContent>Signup</TextLinkContent>
+                                </TextLink>
+                            </ExtraView>
 
                     </StyledFormArea>)}
 
