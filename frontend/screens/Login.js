@@ -1,9 +1,10 @@
 import React, {useState, isPassword, setHidePassword, hidePassword} from 'react'
 import { StatusBar } from 'expo-status-bar';
 import{ Formik } from 'formik';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, ActivityIndicator } from 'react-native';
 import {Octicons, Ionicons, Fontisto } from '@expo/vector-icons';
 import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper';
+import axios from 'axios';
 import{
     StyledContainer,
     InnerContainer,
@@ -35,6 +36,33 @@ const {brand, darklight, primary} = Colors;
 
 const Login = ({navigation}) => {
     const [hidePassword, setHidePassword] = useState(true);
+    const [message, setMessage] = useState();
+    const [messageType, setMessageType] = useState();
+    const handleLogin = (credentials, setSubmitting) => {
+        handleMessage(null);
+        const url = 'http://192.168.1.8:3000/user/login';
+        axios
+        .post(url, credentials)
+        .then((response) => {
+            const result = response.data;
+            const {message, status, data} = result;
+            if (status !== 'SUCCESS') {
+                handleMessage(message, status);
+            }
+            else {
+                navigation.navigate("Welcome");
+            }
+            setSubmitting(false);
+        }).catch(err => {
+            console.error(err);
+            setSubmitting(false);
+            handleMessage("An error occurred. Check your network and try again.");
+        });
+    }
+    const handleMessage = (message, type= 'FAILED') => {
+        setMessage(message);
+        setMessageType(type);
+    }
     return(
         <KeyboardAvoidingWrapper>
         <StyledContainer>
@@ -45,11 +73,16 @@ const Login = ({navigation}) => {
                 <SubTitle>Account Login</SubTitle>
                 <Formik
                     initialValues={{email: '', password: ''}}
-                    onSubmit={(values) => {
-                        console.log(values);
-                        navigation.navigate("Welcome");
+                    onSubmit={(values, {setSubmitting}) => {
+                        if (values.email == '' || values.password == '') {
+                            handleMessage("Please fill in all fields");
+                            setSubmitting(false);
+                        } else {
+                            handleLogin(values, setSubmitting);
+                        }
+                        
                     }}>
-                    {({handleChange, handleBlur, handleSubmit, values}) => (<StyledFormArea> 
+                    {({handleChange, handleBlur, handleSubmit, values, isSubmitting}) => (<StyledFormArea> 
                         <MyTextInput
                             label="Email Address"
                             icon="mail"
@@ -75,13 +108,16 @@ const Login = ({navigation}) => {
                             hidePassword={hidePassword}
                             setHidePassword={setHidePassword}
                             />
-                            <MsgBox>...</MsgBox>
+                            <MsgBox type={messageType}>{message}</MsgBox>
 
-                            <StyledButton onPress={handleSubmit}>
+                            {!isSubmitting && <StyledButton onPress={handleSubmit}>
                                 <ButtonText> 
                                     Login
                                 </ButtonText>
-                            </StyledButton>
+                            </StyledButton>}
+                            {isSubmitting && <StyledButton disabled={true}>
+                                <ActivityIndicator size ="large" color={primary}/>
+                            </StyledButton>}
                             <Line />
 
                             <StyledButton google={true} onPress={handleSubmit}>

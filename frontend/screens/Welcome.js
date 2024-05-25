@@ -40,7 +40,7 @@ const Welcome = () => {
             <InnerContainer>
                 <PageLogo resizeMode="cover" source={require('../assets/img/image1.png')} />
                 <PageTitle>Music Roulette</PageTitle>
-                <SubTitle>Account Login</SubTitle>
+                <SubTitle>Welcome</SubTitle>
                 <Formik
                     initialValues={{email: '', password: ''}}
                     onSubmit={(values) => {
