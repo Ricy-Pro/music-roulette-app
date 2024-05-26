@@ -84,7 +84,13 @@ router.post('/login', (req, res) => {
                 const hashedPassword = data[0].password;
                 bcrypt.compare(password, hashedPassword).then(result => {
                     if (result) {
-                        res.json({status: 'SUCCESS', message: 'Login successful'});
+                        const user = {
+                            name: data[0].name,
+                            email: data[0].email,
+                            dateOfBirth: data[0].dateOfBirth
+                            
+                        };
+                        res.json({status: 'SUCCESS', message: 'Login successful', data: user});
                     }
                     else {
                         res.json({status: 'FAILED', message: 'Invalid password'});

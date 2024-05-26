@@ -108,9 +108,9 @@ export const StyledButton = styled.TouchableOpacity`
 `;
 
 export const ButtonText = styled.Text`
-    color: ${({ google }) => (google ? primary : primary)}; /* Conditional text color */
+    color: ${({ google }) => (google ? primary : primary)}; 
     font-size: 19px;
-    padding: ${({ google }) => (google ? '0 22px' : '0')}; /* Conditional padding */
+    padding: ${({ google }) => (google ? '0 22px' : '0')}; 
 `;
 
 export const MsgBox = styled.Text`

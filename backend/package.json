@@ -23,6 +23,7 @@
     "express": "^4.19.2",
     "mongodb": "^6.6.2",
     "mongoose": "^8.4.0",
+    "nanoid": "^5.0.7",
     "nodemon": "^3.1.0",
     "vercel": "^34.2.3"
   }

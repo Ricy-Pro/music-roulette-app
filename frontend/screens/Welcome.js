@@ -1,122 +1,80 @@
-import React, {useState, isPassword, setHidePassword, hidePassword} from 'react'
-import { StatusBar } from 'expo-status-bar';
-import{ Formik } from 'formik';
-import { View, Text, Image } from 'react-native';
-import {Octicons, Ionicons, Fontisto } from '@expo/vector-icons';
-import{
-    StyledContainer,
-    InnerContainer,
-    PageLogo,
-    PageTitle,
-    SubTitle,
-    StyledFormArea,
-    StyledTextInput,
-    StyledInputLabel,
-    StyledButton,
-    StyledButtontext,
-    LeftIcon,
-    RightIcon,
-    Colors,
-    ButtonText,
-    MsgBox,
-    Line,
-    ExtraText,
-    ExtraView,
-    TextLink,
-    TextLinkContent,
-
+// screens/Welcome.js
+import React, { useState } from 'react';
+import { View, Text, Button, TextInput } from 'react-native';
+import axios from 'axios';
+import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledFormArea, StyledButton, ButtonText, MsgBox, ExtraView, ExtraText, TextLink, TextLinkContent } from '../components/style';
+import {nanoid} from 'nanoid';
+const Welcome = ({ navigation, route}) => {
+    const [lobbyId, setLobbyId] = useState('');
+    const [message, setMessage] = useState('');
+    const [messageType, setMessageType] = useState('');
     
+   
+    const { userData } = route.params;
+    
+    const handleCreateLobby = () => {
+        axios.post('http://192.168.1.8:3000/lobby/create', { host: userData.name })
+            .then(response => {
+                const { status, message, lobby } = response.data;
+                if (status === 'SUCCESS') {
+                    setMessage(`Lobby created: ${lobby._id}`);
+                    setMessageType('SUCCESS');
+                } else {
+                    setMessage(message);
+                    setMessageType('FAILED');
+                }
+            })
+            .catch(error => {
+                setMessage('An error occurred. Try again.');
+                setMessageType('FAILED');
+            });
+    };
 
+    const handleJoinLobby = () => {
+        if (lobbyId === '') {
+            setMessage('Please enter a lobby ID');
+            setMessageType('FAILED');
+            return;
+        }
+        axios.post('http://192.168.1.8:3000/lobby/join', { lobbyId, participant: userData.name })
+            .then(response => {
+                const { status, message, updatedLobby } = response.data;
+                if (status === 'SUCCESS') {
+                    setMessage(`Joined lobby: ${updatedLobby._id}`);
+                    setMessageType('SUCCESS');
+                } else {
+                    setMessage(message);
+                    setMessageType('FAILED');
+                }
+            })
+            .catch(error => {
+                setMessage('An error occurred. Try again.');
+                setMessageType('FAILED');
+            });
+    };
 
-} from '../components/style';
-const {brand, darklight, primary} = Colors;
-
-
-const Welcome = () => {
-    const [hidePassword, setHidePassword] = useState(true);
-    return(
+    return (
         <StyledContainer>
-            <StatusBar style="dark" />
             <InnerContainer>
-                <PageLogo resizeMode="cover" source={require('../assets/img/image1.png')} />
-                <PageTitle>Music Roulette</PageTitle>
-                <SubTitle>Welcome</SubTitle>
-                <Formik
-                    initialValues={{email: '', password: ''}}
-                    onSubmit={(values) => {
-                        console.log(values);
-                    }}>
-                    {({handleChange, handleBlur, handleSubmit, values}) => (<StyledFormArea> 
-                        <MyTextInput
-                            label="Email Address"
-                            icon="mail"
-                            placeholder="domain@something.com"
-                            placeholderTextColor={darklight}
-                            onChangeText={handleChange('email')}
-                            onBlur={handleBlur('email')}
-                            value={values.email}
-                            keyboardType="email-address"
-                            
-                            />
-                            <MyTextInput
-                            label="Password"
-                            icon="lock"
-                            placeholder="* * * * * * * *"
-                            
-                            placeholderTextColor={darklight}
-                            onChangeText={handleChange('password')}
-                            onBlur={handleBlur('password')}
-                            value={values.password}
-                            secureTextEntry={hidePassword}
-                            isPassword={true}
-                            hidePassword={hidePassword}
-                            setHidePassword={setHidePassword}
-                            />
-                            <MsgBox>...</MsgBox>
-
-                            <StyledButton onPress={handleSubmit}>
-                                <ButtonText> 
-                                    Login
-                                </ButtonText>
-                            </StyledButton>
-                            <Line />
-
-                            <StyledButton google={true} onPress={handleSubmit}>
-                                <Fontisto name="google" color={primary} size={25} />
-                                <ButtonText google={true}> 
-                                    Sign in with Google
-                                </ButtonText>
-                            </StyledButton>
-                            <ExtraView>
-                                <ExtraText>Don't have an account already? </ExtraText>
-                                <TextLink>
-                                    <TextLinkContent>Signup</TextLinkContent>
-                                </TextLink>
-                            </ExtraView>
-
-                    </StyledFormArea>)}
-
-                        
-                    
-                </Formik>
+                <PageTitle>Welcome to Music Roulette</PageTitle>
+                <SubTitle>Create or Join a Lobby</SubTitle>
+                <StyledFormArea>
+                    <StyledButton onPress={handleCreateLobby}>
+                        <ButtonText>Create Lobby</ButtonText>
+                    </StyledButton>
+                    <TextInput
+                        placeholder="Enter Lobby ID"
+                        value={lobbyId}
+                        onChangeText={setLobbyId}
+                    />
+                    <StyledButton onPress={handleJoinLobby}>
+                        <ButtonText>Join Lobby</ButtonText>
+                    </StyledButton>
+                    <MsgBox type={messageType}>{message}</MsgBox>
+                </StyledFormArea>
             </InnerContainer>
         </StyledContainer>
     );
-}
-const MyTextInput = ({label, icon,isPassword, hidePassword, setHidePassword, ...props}) => {
-    return(
-        <View>
-            <LeftIcon>
-                <Octicons name={icon} size={30} color={Colors.darklight} />
-            </LeftIcon>
-            <StyledInputLabel>{label}</StyledInputLabel>
-            <StyledTextInput {...props} />
-            {isPassword==true && (
-                <RightIcon onPress={() => setHidePassword(!hidePassword)}>
-                   <Ionicons name={hidePassword ? 'eye-off' : 'eye'} size={30} color={darklight} />
-                </RightIcon>
-            )}
-        </View>
-    );
 };
+
 export default Welcome;
