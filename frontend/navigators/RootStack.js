@@ -4,7 +4,9 @@ import React from 'react';
 import Login from './../screens/Login';
 import Signup from './../screens/Signup';
 import Welcome from './../screens/Welcome';
-import {Colors} from './../components/style';
+import Lobby from './../screens/Lobby';
+import { Colors } from './../components/style';
+
 const Stack = createNativeStackNavigator();
 
 const RootStack = () => {
@@ -14,8 +16,6 @@ const RootStack = () => {
                screenOptions={{
                      headerStyle: {
                      backgroundColor: 'transparent'
-                    
-                    
                     },
                     headerTintColor: Colors.tertiary,
                     headerTransparent: true,
@@ -23,13 +23,13 @@ const RootStack = () => {
                     headerLeftContainerStyle: {
                         paddingLeft: 20
                     }
-
                }}
                initialRouteName='Login'
                >
                 <Stack.Screen name="Login" component={Login} />
                 <Stack.Screen name="Signup" component={Signup} />
                 <Stack.Screen name="Welcome" component={Welcome} />
+                <Stack.Screen name="Lobby" component={Lobby} />
             </Stack.Navigator>
         </NavigationContainer>
     );

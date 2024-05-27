@@ -64,7 +64,7 @@ const Signup = ({navigation}) => {
                 handleMessage(message, status);
             }
             else {
-                navigation.navigate("Welcome");
+                navigation.navigate("Login");
             }
             setSubmitting(false);
         }).catch(err => {

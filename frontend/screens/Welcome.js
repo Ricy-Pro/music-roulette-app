@@ -1,17 +1,15 @@
-// screens/Welcome.js
 import React, { useState } from 'react';
-import { View, Text, Button, TextInput } from 'react-native';
+import { View, Text, TextInput, Button, Linking, Alert } from 'react-native';
 import axios from 'axios';
-import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledFormArea, StyledButton, ButtonText, MsgBox, ExtraView, ExtraText, TextLink, TextLinkContent } from '../components/style';
-import {nanoid} from 'nanoid';
-const Welcome = ({ navigation, route}) => {
+import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledFormArea, StyledButton, ButtonText, MsgBox } from '../components/style';
+
+const Welcome = ({ navigation, route }) => {
     const [lobbyId, setLobbyId] = useState('');
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
-    
-   
+
     const { userData } = route.params;
-    
+
     const handleCreateLobby = () => {
         axios.post('http://192.168.1.8:3000/lobby/create', { host: userData.name })
             .then(response => {
@@ -19,6 +17,7 @@ const Welcome = ({ navigation, route}) => {
                 if (status === 'SUCCESS') {
                     setMessage(`Lobby created: ${lobby._id}`);
                     setMessageType('SUCCESS');
+                    navigation.navigate('Lobby', { lobbyId: lobby._id, host: userData.name });
                 } else {
                     setMessage(message);
                     setMessageType('FAILED');
@@ -42,6 +41,7 @@ const Welcome = ({ navigation, route}) => {
                 if (status === 'SUCCESS') {
                     setMessage(`Joined lobby: ${updatedLobby._id}`);
                     setMessageType('SUCCESS');
+                    navigation.navigate('Lobby', { lobbyId: updatedLobby._id, host: null });
                 } else {
                     setMessage(message);
                     setMessageType('FAILED');
@@ -50,6 +50,15 @@ const Welcome = ({ navigation, route}) => {
             .catch(error => {
                 setMessage('An error occurred. Try again.');
                 setMessageType('FAILED');
+            });
+    };
+
+    const handleAuthSetup = () => {
+        const authURL = 'https://c1aa-109-103-59-146.ngrok-free.app/ytmusic/auth/setup';
+        Linking.openURL(authURL)
+            .catch(error => {
+                console.error('Error opening URL:', error);
+                Alert.alert('Error opening URL. Please try again.');
             });
     };
 
@@ -69,6 +78,9 @@ const Welcome = ({ navigation, route}) => {
                     />
                     <StyledButton onPress={handleJoinLobby}>
                         <ButtonText>Join Lobby</ButtonText>
+                    </StyledButton>
+                    <StyledButton onPress={handleAuthSetup}>
+                        <ButtonText>Connect to YouTube Music</ButtonText>
                     </StyledButton>
                     <MsgBox type={messageType}>{message}</MsgBox>
                 </StyledFormArea>

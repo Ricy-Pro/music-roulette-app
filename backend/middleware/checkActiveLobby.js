@@ -1,4 +1,3 @@
-// middleware/checkActiveLobby.js
 const User = require('../models/User');
 
 const checkActiveLobby = async (req, res, next) => {
