@@ -3,6 +3,23 @@ const { spawn } = require('child_process');
 
 const router = express.Router();
 
+const fs = require('fs');
+const path = require('path');
+
+// Fetch URL from url.txt
+router.get('/auth/url', (req, res) => {
+    const filePath = ('/Users/prodanrobert/Documents/GitHub/music-roulette-app/backend/url.txt')
+
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading url.txt:', err);
+            res.status(500).send('Error reading URL file.');
+            return;
+        }
+
+        res.send(data.trim());
+    });
+});
 // Setup OAuth
 router.get('/auth/setup', (req, res) => {
     const pythonProcess = spawn('python3', ['ytmusic_service.py', 'setup']);

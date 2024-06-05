@@ -63,5 +63,20 @@ router.post('/delete', async (req, res) => {
         res.json({ status: 'FAILED', message: 'An error occurred', err });
     }
 });
+// Get lobby data by lobbyId
+router.get('/:lobbyId', async (req, res) => {
+    const { lobbyId } = req.params;
+
+    try {
+        const lobby = await Lobby.findById(lobbyId);
+        if (!lobby) {
+            return res.json({ status: 'FAILED', message: 'Lobby not found' });
+        }
+        res.json({ status: 'SUCCESS', lobby });
+    } catch (err) {
+        res.json({ status: 'FAILED', message: 'An error occurred', err });
+    }
+});
+
 
 module.exports = router;

@@ -5,6 +5,7 @@ import Login from './../screens/Login';
 import Signup from './../screens/Signup';
 import Welcome from './../screens/Welcome';
 import Lobby from './../screens/Lobby';
+import GameScreen from './../screens/GameScreen'; // Import the new game screen
 import { Colors } from './../components/style';
 
 const Stack = createNativeStackNavigator();
@@ -30,6 +31,8 @@ const RootStack = () => {
                 <Stack.Screen name="Signup" component={Signup} />
                 <Stack.Screen name="Welcome" component={Welcome} />
                 <Stack.Screen name="Lobby" component={Lobby} />
+                <Stack.Screen name="GameScreen" component={GameScreen} /> 
+                
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, ActivityIndicator, Alert } from 'react-native';
+// ... other imports
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledButton, ButtonText } from '../components/style';
-
+import { useState, useEffect } from 'react';
+import { ActivityIndicator, FlatList, Text, Alert } from 'react-native';
 const Lobby = ({ navigation, route }) => {
     const { lobbyId, host } = route.params;
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    url='https://e2b5-109-103-59-146.ngrok-free.app'
     useEffect(() => {
-        axios.get(`http://192.168.1.8:3000/lobby/${lobbyId}`)
+        axios.get(url+`/lobby/${lobbyId}`)
             .then(response => {
                 const { status, lobby } = response.data;
                 if (status === 'SUCCESS') {
-                    setParticipants(lobby.participants);
+                    setParticipants(lobby.participants,lobby.host);
+                    
                 } else {
                     console.log('Failed to fetch lobby data');
                 }
@@ -27,7 +28,7 @@ const Lobby = ({ navigation, route }) => {
         // Clean up function to delete the lobby when the host leaves the page
         return () => {
             if (host) {
-                axios.post('http://192.168.1.8:3000/lobby/delete', { host })
+                axios.post(url+'/lobby/delete', { host })
                     .then(response => {
                         console.log(response.data.message);
                     })
@@ -39,8 +40,19 @@ const Lobby = ({ navigation, route }) => {
     }, []);
 
     const handleStartGame = () => {
-        // Add your game starting logic here
-        console.log('Game started');
+        axios.post(url+'/game/start', { lobbyId })
+            .then(response => {
+                const { status, message, lobby } = response.data;
+                if (status === 'SUCCESS') {
+                    console.log('Game started');
+                    navigation.navigate('GameScreen', { lobbyId: lobby._id, host });
+                } else {
+                    console.log(message);
+                }
+            })
+            .catch(error => {
+                console.log('An error occurred:', error);
+            });
     };
 
     const handleBackPress = () => {

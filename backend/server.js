@@ -11,7 +11,7 @@ const bodyParser = require('express').json();
 const UserRouter = require('./api/User.js');
 const LobbyRouter = require('./api/Lobby.js');
 const YTMusicAuthRouter = require('./api/ytmusicauth.js'); // Import the YTMusicAuth routes
-
+const GameRouter = require('./api/Game.js');
 // Middleware
 app.use(cors());
 app.use(bodyParser);
@@ -20,6 +20,7 @@ app.use(bodyParser);
 app.use('/user', UserRouter);
 app.use('/lobby', LobbyRouter);
 app.use('/ytmusic', YTMusicAuthRouter); // Use the YTMusicAuth routes
+app.use('/game', GameRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
