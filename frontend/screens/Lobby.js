@@ -1,57 +1,82 @@
-// ... other imports
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, FlatList, Text, Alert } from 'react-native';
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledButton, ButtonText } from '../components/style';
-import { useState, useEffect } from 'react';
-import { ActivityIndicator, FlatList, Text, Alert } from 'react-native';
+
+const url = 'https://c7cd-5-13-177-212.ngrok-free.app';
+
 const Lobby = ({ navigation, route }) => {
-    const { lobbyId, host } = route.params;
+    const { lobbyId, userName, host } = route.params; // Extract userName and host
+    console.log('Lobby ID:', lobbyId);
+    console.log('User Name:', userName);
+    console.log('Host:', host); // Debug log
+
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
-    url='https://e2b5-109-103-59-146.ngrok-free.app'
-    useEffect(() => {
-        axios.get(url+`/lobby/${lobbyId}`)
-            .then(response => {
-                const { status, lobby } = response.data;
-                if (status === 'SUCCESS') {
-                    setParticipants(lobby.participants,lobby.host);
-                    
-                } else {
-                    console.log('Failed to fetch lobby data');
-                }
-                setLoading(false);
-            })
-            .catch(error => {
-                console.log('An error occurred:', error);
-                setLoading(false);
-            });
 
-        // Clean up function to delete the lobby when the host leaves the page
-        return () => {
-            if (host) {
-                axios.post(url+'/lobby/delete', { host })
-                    .then(response => {
-                        console.log(response.data.message);
-                    })
-                    .catch(error => {
-                        console.log('An error occurred:', error);
-                    });
+    useEffect(() => {
+        const fetchLobbyDetails = () => {
+            axios.get(`${url}/lobby/${lobbyId}`)
+                .then(response => {
+                    const { status, lobby } = response.data;
+                    if (status === 'SUCCESS') {
+                        setParticipants(lobby.participants);
+                    } else {
+                        console.error('Failed to fetch lobby data:', response.data.message);
+                    }
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.error('An error occurred while fetching lobby data:', error);
+                    setLoading(false);
+                });
+        };
+
+        const pollEvents = async () => {
+            while (true) {
+                try {
+                    const response = await axios.get(`${url}/lobby/events`);
+                    const message = response.data;
+
+                    console.log('Polling message received:', message);
+
+                    // Ensure the message object is defined and has the expected properties
+                    if (message && message.status === 'SUCCESS') {
+                        if (message.updatedLobby && message.updatedLobby._id === lobbyId) {
+                            setParticipants(message.updatedLobby.participants);
+                            console.log('Participants updated:', message.updatedLobby.participants);
+                        } else if (message.message === 'Lobby deleted as host left' && message.lobbyId === lobbyId) {
+                            navigation.navigate('Welcome', { userData: { name: userName } });
+                            break;  // Exit the loop if the lobby is deleted
+                        }
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
             }
         };
-    }, []);
+
+        fetchLobbyDetails();
+        pollEvents();
+
+        return () => {
+            // Cleanup function if needed
+        };
+    }, [lobbyId, userName, navigation]); // Added userName and navigation as dependencies
 
     const handleStartGame = () => {
-        axios.post(url+'/game/start', { lobbyId })
+        axios.post(`${url}/game/start`, { lobbyId })
             .then(response => {
                 const { status, message, lobby } = response.data;
                 if (status === 'SUCCESS') {
                     console.log('Game started');
-                    navigation.navigate('GameScreen', { lobbyId: lobby._id, host });
+                    navigation.navigate('GameScreen', { lobbyId: lobby._id, userName });
                 } else {
-                    console.log(message);
+                    console.error('Failed to start game:', message);
                 }
             })
             .catch(error => {
-                console.log('An error occurred:', error);
+                console.error('An error occurred while starting the game:', error);
             });
     };
 
@@ -66,7 +91,25 @@ const Lobby = ({ navigation, route }) => {
                 },
                 {
                     text: "OK", onPress: () => {
-                        navigation.navigate('Welcome', { userData: { name: host } });
+                        console.log('Leaving lobby:', lobbyId, 'Participant:', userName); // Debug log
+                        axios.post(`${url}/lobby/leave`, { lobbyId, participant: userName })
+                            .then(response => {
+                                const { status, message, updatedLobby } = response.data;
+                                if (status === 'SUCCESS') {
+                                    console.log(message);
+                                    if (message === 'Lobby deleted') {
+                                        navigation.navigate('Welcome', { userData: { name: userName } });
+                                    } else {
+                                        console.log('Lobby updated:', updatedLobby);
+                                        navigation.navigate('Welcome', { userData: { name: userName } });
+                                    }
+                                } else {
+                                    console.error('Failed to leave lobby:', message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('An error occurred while leaving the lobby:', error);
+                            });
                     }
                 }
             ]

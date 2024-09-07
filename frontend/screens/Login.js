@@ -43,7 +43,7 @@ const Login = ({navigation}) => {
     const [googleSubmitting, setGoogleSubmitting] = useState(false);
     const handleLogin = (credentials, setSubmitting) => {
         handleMessage(null);
-        const url = 'http://192.168.1.8:3000/user/login';
+        const url = 'http://192.168.68.110:3000/user/login';
         axios
         .post(url, credentials)
         .then((response) => {

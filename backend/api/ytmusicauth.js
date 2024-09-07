@@ -2,26 +2,64 @@ const express = require('express');
 const { spawn } = require('child_process');
 
 const router = express.Router();
-
+const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
 
-// Fetch URL from url.txt
+
+// Get the URL for the OAuth process
+
 router.get('/auth/url', (req, res) => {
-    const filePath = ('/Users/prodanrobert/Documents/GitHub/music-roulette-app/backend/url.txt')
+    const directory = 'C:/Users/ricir/OneDrive/Documents/GitHub/music-roulette-app/backend';
+    
+    // Get all files in the directory
+    
+    const files = fs.readdirSync(directory);
+    
+    // Filter files that start with 'url' and end with '.txt'
+    const urlFiles = files.filter(file => file.startsWith('url') && file.endsWith('.txt'));
+    
+    if (urlFiles.length === 0) {
+        res.status(404).send('No URL file found.');
+        return;
+    }
+
+    // Sort files by their creation time, latest first
+    const latestUrlFile = urlFiles.map(file => ({
+        name: file,
+        time: fs.statSync(path.join(directory, file)).mtime.getTime() // Get modification time
+    })).sort((a, b) => b.time - a.time)[0].name;
+
+    const filePath = path.join(directory, latestUrlFile);
 
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
-            console.error('Error reading url.txt:', err);
+            console.error('Error reading URL file:', err);
             res.status(500).send('Error reading URL file.');
             return;
         }
 
+        // Send the data back to the client
+        console.log('URL sent:', data.trim());
         res.send(data.trim());
+        
+
+        // Delete the file after sending the response
+        fs.unlink(filePath, (unlinkErr) => {
+            if (unlinkErr) {
+                console.error('Error deleting URL file:', unlinkErr);
+            } else {
+                console.log(`${latestUrlFile} was deleted.`);
+            }
+        });
     });
 });
+
+
 // Setup OAuth
-router.get('/auth/setup', (req, res) => {
+router.post('/auth/setup', (req, res) => {
+    const { userName } = req.body; // Retrieve userName from the request body
+
     const pythonProcess = spawn('python3', ['ytmusic_service.py', 'setup']);
 
     pythonProcess.stdout.on('data', (data) => {
@@ -32,9 +70,67 @@ router.get('/auth/setup', (req, res) => {
         console.error(`Python stderr: ${data}`);
     });
 
-    pythonProcess.on('close', (code) => {
+    pythonProcess.on('close', async (code) => {
         if (code === 0) {
-            res.send('OAuth setup complete.');
+            console.log('OAuth setup complete.');
+
+            const directory = 'C:/Users/ricir/OneDrive/Documents/GitHub/music-roulette-app/backend'; // Adjust this path if needed
+
+            try {
+                // Get the latest oauth*.json file
+                const files = fs.readdirSync(directory);
+                const oauthFiles = files.filter(file => file.startsWith('oauth') && file.endsWith('.json'));
+
+                if (oauthFiles.length === 0) {
+                    return res.status(404).send('No OAuth token file found.');
+                }
+
+                // Sort by modification time and pick the latest file
+                const latestOauthFile = oauthFiles
+                    .map(file => ({
+                        name: file,
+                        time: fs.statSync(path.join(directory, file)).mtime.getTime()
+                    }))
+                    .sort((a, b) => b.time - a.time)[0].name;
+
+                const filePath = path.join(directory, latestOauthFile);
+
+                // Read the latest oauth*.json file
+                fs.readFile(filePath, 'utf8', async (err, data) => {
+                    if (err) {
+                        console.error('Error reading OAuth token file:', err);
+                        return res.status(500).send('Failed to read OAuth token.');
+                    }
+
+                    const tokenData = JSON.parse(data);
+
+                    try {
+                        // Find the user by userName (assuming userName is unique)
+                        await User.findOneAndUpdate({ name: userName },{authenticatorToken: {
+                            access_token: tokenData.access_token,
+                            refresh_token: tokenData.refresh_token,
+                            scope: tokenData.scope,
+                            token_type: tokenData.token_type,
+                            expires_at: tokenData.expires_at,
+                            expires_in: tokenData.expires_in
+                        }} );
+
+
+                        // Delete the oauth*.json file after saving the token
+                        fs.unlinkSync(filePath);
+
+                        res.send('OAuth setup complete and token saved.');
+
+
+                    } catch (error) {
+                        console.error('Error saving token to database:', error);
+                        res.status(500).send('Failed to save OAuth token.');
+                    }
+                });
+            } catch (error) {
+                console.error('Error handling OAuth files:', error);
+                res.status(500).send('Failed to process OAuth files.');
+            }
         } else {
             res.status(500).send(`Python process exited with code ${code}`);
         }

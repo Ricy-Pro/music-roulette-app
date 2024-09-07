@@ -2,23 +2,25 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Linking, Alert } from 'react-native';
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledFormArea, StyledButton, ButtonText, MsgBox } from '../components/style';
-url='https://e2b5-109-103-59-146.ngrok-free.app';
+
+const url = 'https://c7cd-5-13-177-212.ngrok-free.app';
+
 const Welcome = ({ navigation, route }) => {
     const [lobbyId, setLobbyId] = useState('');
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
 
     const { userData } = route.params;
+    const userName = userData.name;
 
     const handleCreateLobby = () => {
-        axios.post(url+'/lobby/create', { host: userData.name })
+        axios.post(`${url}/lobby/create`, { host: userName })
             .then(response => {
                 const { status, message, lobby } = response.data;
                 if (status === 'SUCCESS') {
                     setMessage(`Lobby created: ${lobby._id}`);
                     setMessageType('SUCCESS');
-                    navigation.navigate('Lobby', { lobbyId: lobby._id, host: userData.name });
-                    
+                    navigation.navigate('Lobby', { lobbyId: lobby._id, userName, host: userName });
                 } else {
                     setMessage(message);
                     setMessageType('FAILED');
@@ -36,13 +38,13 @@ const Welcome = ({ navigation, route }) => {
             setMessageType('FAILED');
             return;
         }
-        axios.post(url+'/lobby/join', { lobbyId, participant: userData.name })
+        axios.post(`${url}/lobby/join`, { lobbyId, participant: userName })
             .then(response => {
                 const { status, message, updatedLobby } = response.data;
                 if (status === 'SUCCESS') {
                     setMessage(`Joined lobby: ${updatedLobby._id}`);
                     setMessageType('SUCCESS');
-                    navigation.navigate('Lobby', { lobbyId: updatedLobby._id, host: null });
+                    navigation.navigate('Lobby', { lobbyId: updatedLobby._id, userName, host: null });
                 } else {
                     setMessage(message);
                     setMessageType('FAILED');
@@ -55,30 +57,29 @@ const Welcome = ({ navigation, route }) => {
     };
 
     const handleAuthSetup = async () => {
-        const authURL = url+'/ytmusic/auth/setup';
-        Linking.openURL(authURL)
-            .then(() => {
-                // Wait for some time to allow the OAuth process to complete and url.txt to be created
-                setTimeout(async () => {
-                    try {
-                        const response = await axios.get(url+'/auth/url');
-                        const fetchedURL = response.data;
-                        Linking.openURL(fetchedURL)
-                            .catch(error => {
-                                console.error('Error opening URL:', error);
-                                Alert.alert('Error opening URL. Please try again.');
-                            });
-                    } catch (error) {
-                        console.error('Error fetching auth URL:', error);
-                        Alert.alert('Error fetching auth URL. Please try again.');
-                    }
-                }, 3000); // Adjust this delay as needed based on the time it takes for the file to be created
-            })
-            .catch(error => {
-                console.error('Error opening URL:', error);
-                Alert.alert('Error opening URL. Please try again.');
-            });
+        const authURL = `${url}/ytmusic/auth/setup`;
+    
+        try {
+            // Start the OAuth process with a POST request (sends userName)
+            axios.post(authURL, { userName });
+    
+            // Wait for OAuth to complete (you can adjust the delay if needed)
+            await new Promise(resolve => setTimeout(resolve, 7000)); 
+    
+            // Fetch the resulting URL after authentication
+            const response = await axios.get(`${url}/ytmusic/auth/url`);
+            const fetchedURL = response.data;
+            console.log('Fetched URL:', fetchedURL);
+            // Open the fetched URL in the browser
+            await Linking.openURL(fetchedURL);
+    
+        } catch (error) {
+            console.error('Error during auth setup:', error);
+            Alert.alert('Error during authentication setup. Please try again.');
+        }
     };
+    
+    
 
     return (
         <StyledContainer>

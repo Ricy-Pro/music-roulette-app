@@ -7,7 +7,7 @@ const GameScreen = ({ navigation, route }) => {
     const { lobbyId, host } = route.params;
     const [loading, setLoading] = useState(true);
     const [lobby, setLobby] = useState(null);
-    url='https://e2b5-109-103-59-146.ngrok-free.app'
+    url='https://c7cd-5-13-177-212.ngrok-free.app'
     useEffect(() => {
         axios.get(url+`/lobby/${lobbyId}`)
             .then(response => {
@@ -15,6 +15,7 @@ const GameScreen = ({ navigation, route }) => {
                 const { status, lobby } = response.data;
                 if (status === 'SUCCESS') {
                     setLobby(lobby);
+                    
                 } else {
                     console.log('Failed to fetch lobby data:', response.data.message);
                 }

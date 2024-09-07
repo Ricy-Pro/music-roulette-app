@@ -3,6 +3,7 @@
     "expo-auth-session": "^5.5.2",
     "expo-crypto": "^13.0.2",
     "expo-google-app-auth": "^10.0.0",
+    "mongodb": "^6.8.0",
     "styled-components": "^6.1.11"
   }
 }
