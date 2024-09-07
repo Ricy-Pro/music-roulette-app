@@ -48,6 +48,9 @@ router.post('/create', async (req, res) => {
         if (existingUser && existingUser.activeLobby) {
             return res.json({ status: 'FAILED', message: 'User already hosting a lobby' });
         }
+        if (existingUser && existingUser.authenticatorToken === null) {
+            return res.json({ status: 'FAILED', message: 'Please authenticate first' });
+        }
 
         const lobbyId = await generateShortId();
         const newLobby = new Lobby({ _id: lobbyId, host, participants: [host] });
@@ -67,13 +70,19 @@ router.post('/create', async (req, res) => {
 router.post('/join', async (req, res) => {
     const { lobbyId, participant } = req.body;
     try {
+        existingUser = await User.findOne({ name: participant });
+        if (existingUser && existingUser.authenticatorToken === null) {
+            return res.json({ status: 'FAILED', message: 'User is not authenticated' });
+        }
         const lobby = await Lobby.findById(lobbyId);
         if (!lobby) return res.json({ status: 'FAILED', message: 'Lobby not found' });
 
         if (lobby.participants.includes(participant)) {
             return res.json({ status: 'FAILED', message: 'Participant already in the lobby' });
         }
-
+        if (lobby.gameStarted === true) {
+            return res.json({ status: 'FAILED', message: 'Game already started' });
+        }
         lobby.participants.push(participant);
         const updatedLobby = await lobby.save();
 

@@ -7,6 +7,9 @@ const checkActiveLobby = async (req, res, next) => {
     if (user && user.activeLobby) {
         return res.json({ status: 'FAILED', message: 'You are already hosting another lobby' });
     }
+    if (user && user.authenticatorToken == null) {
+        return res.json({ status: 'FAILED', message: 'You have already authenticated' });
+    }
 
     next();
 };
