@@ -8,6 +8,7 @@ Timed Rounds: Every round lasts for 30 seconds. Players vote, and then the game 
 Dynamic Scoring System: Players earn points based on how accurately they guess the song's owner.
 Real-time Voting: Players can see their votes being cast and the game dynamically updates scores.
 Integrated with YT Music API: Connect your YouTube Music account and fetch songs from your personal library.
+
 🛠️ Tech Stack
 Frontend:
 React Native
@@ -18,6 +19,7 @@ REST APIs for managing game state, user authentication, and gameplay
 Database: MongoDB (for storing user data, game sessions, and scores)
 Third-party Integration: YouTube Music API (for accessing user libraries)
 Real-time updates: Handled via Express APIs
+
 🎮 How to Play
 Join a Game: Enter the lobby and join a game session.
 Start the Game: The game will randomly select songs from players' libraries.
