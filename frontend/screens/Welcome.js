@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, Linking, Alert } from 'react-native';
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledFormArea, StyledButton, ButtonText, MsgBox } from '../components/style';
 
-const url = 'https://c7cd-5-13-177-212.ngrok-free.app';
+const url = 'https://221d-2a02-2f0e-d09-a600-292d-1ca3-c17c-2aca.ngrok-free.app';
 
 const Welcome = ({ navigation, route }) => {
     const [lobbyId, setLobbyId] = useState('');

@@ -60,7 +60,7 @@ router.get('/auth/url', (req, res) => {
 router.post('/auth/setup', (req, res) => {
     const { userName } = req.body; // Retrieve userName from the request body
 
-    const pythonProcess = spawn('python3', ['ytmusic_service.py', 'setup']);
+    const pythonProcess = spawn('python3', ['ytmusic_auth.py', 'setup']);
 
     pythonProcess.stdout.on('data', (data) => {
         console.log(`Python stdout: ${data}`);

@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Text, Alert } from 'react-native';
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledButton, ButtonText } from '../components/style';
 
-const url = 'https://c7cd-5-13-177-212.ngrok-free.app';
+const url = 'https://221d-2a02-2f0e-d09-a600-292d-1ca3-c17c-2aca.ngrok-free.app';
 
 const Lobby = ({ navigation, route }) => {
     const { lobbyId, userName, host } = route.params; // Extract userName and host
@@ -37,15 +37,23 @@ const Lobby = ({ navigation, route }) => {
                 try {
                     const response = await axios.get(`${url}/lobby/events`);
                     const message = response.data;
-
+        
                     console.log('Polling message received:', message);
-
+        
                     // Ensure the message object is defined and has the expected properties
                     if (message && message.status === 'SUCCESS') {
                         if (message.updatedLobby && message.updatedLobby._id === lobbyId) {
                             setParticipants(message.updatedLobby.participants);
                             console.log('Participants updated:', message.updatedLobby.participants);
-                        } else if (message.message === 'Lobby deleted as host left' && message.lobbyId === lobbyId) {
+                        } 
+                        // Check if the game has started
+                        else if (message.message === 'Game started' && message.lobby._id === lobbyId) {
+                            console.log('Game started! Navigating to GameScreen...');
+                            navigation.navigate('GameScreen', { lobbyId: message.lobby._id, userName });
+                            break; // Exit the polling loop if the game has started
+                        }
+                        // Handle lobby deletion
+                        else if (message.message === 'Lobby deleted as host left' && message.lobbyId === lobbyId) {
                             navigation.navigate('Welcome', { userData: { name: userName } });
                             break;  // Exit the loop if the lobby is deleted
                         }
@@ -55,6 +63,7 @@ const Lobby = ({ navigation, route }) => {
                 }
             }
         };
+        
 
         fetchLobbyDetails();
         pollEvents();
@@ -70,6 +79,7 @@ const Lobby = ({ navigation, route }) => {
                 const { status, message, lobby } = response.data;
                 if (status === 'SUCCESS') {
                     console.log('Game started');
+                    // Navigate to GameScreen for the host
                     navigation.navigate('GameScreen', { lobbyId: lobby._id, userName });
                 } else {
                     console.error('Failed to start game:', message);
@@ -79,6 +89,7 @@ const Lobby = ({ navigation, route }) => {
                 console.error('An error occurred while starting the game:', error);
             });
     };
+    
 
     const handleBackPress = () => {
         Alert.alert(

@@ -1,45 +1,38 @@
-import threading
-from ytmusicapi import YTMusic
 import sys
 import json
-import subprocess
-import time
-import random
+from ytmusicapi import YTMusic
 
-def run_oauth():
-    process = subprocess.Popen(['ytmusicapi', 'oauth'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    
-    # Adjust the wait time as needed based on the OAuth authentication process
-    time.sleep(30)  
-    process.stdin.write('\n')
-    process.stdin.flush()
-    process.communicate()
-    process.stdin.close()
+def fetch_library(token):
+    # Ensure the token is passed correctly
+    ytmusic = YTMusic(auth=token)  # This should be a valid dictionary
+    library = ytmusic.get_liked_songs(limit=1000)
 
-def fetch_library():
-    ytmusic = YTMusic('oauth.json')
-    library = ytmusic.get_library_songs(limit=1000)
-    return library
+    # Extract only the relevant fields (title, artist name, thumbnail URL)
+    simplified_library = []
+    for track in library['tracks']:
+        simplified_library.append({
+            'title': track['title'],
+            'artist': track['artists'][0]['name'] if track['artists'] else "Unknown Artist",
+            'thumbnail': track['thumbnails'][0]['url'] if track['thumbnails'] else "No Thumbnail"
+        })
 
-def select_random_songs(library, num_songs):
-    return random.sample(library, num_songs)
-
-def setup_oauth_thread():
-    thread = threading.Thread(target=run_oauth)
-    thread.start()
-    thread.join()  # Wait for the OAuth thread to finish
-
-def main():
-    if len(sys.argv) == 2 and sys.argv[1] == 'setup':
-        setup_oauth_thread()
-        print('OAuth setup complete.')
-        return
+    return simplified_library
 
 
-    ytmusic = YTMusic('oauth.json')
-    
-    library = select_random_songs(fetch_library(), 5)
-    print(json.dumps(library))
 
 if __name__ == '__main__':
-    main()
+    # Expect the token as an argument passed from Node.js
+    if len(sys.argv) < 2:
+        print(json.dumps({'error': 'No token provided'}))
+        sys.exit(1)
+
+    # Parse the token passed as a string from Node.js
+    token = json.loads(sys.argv[1])
+
+    # Fetch the library for the given token
+    try:
+        library = fetch_library(token)
+        
+        print(json.dumps(library))  # Output the library data as JSON to stdout
+    except Exception as e:
+        print(json.dumps({'error': str(e)}))

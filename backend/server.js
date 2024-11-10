@@ -8,7 +8,7 @@ const cors = require('cors');
 const bodyParser = require('express').json();
 
 const UserRouter = require('./api/User.js');
-const LobbyRouter = require('./api/Lobby.js');
+const {router:LobbyRouter} = require('./api/Lobby.js');
 const YTMusicAuthRouter = require('./api/ytmusicauth.js');
 const GameRouter = require('./api/Game.js');
 

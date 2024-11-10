@@ -4,10 +4,10 @@ import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledButton, ButtonText } from '../components/style';
 
 const GameScreen = ({ navigation, route }) => {
-    const { lobbyId, host } = route.params;
+    const { lobbyId, userName } = route.params;
     const [loading, setLoading] = useState(true);
     const [lobby, setLobby] = useState(null);
-    url='https://c7cd-5-13-177-212.ngrok-free.app'
+    url='https://221d-2a02-2f0e-d09-a600-292d-1ca3-c17c-2aca.ngrok-free.app'
     useEffect(() => {
         axios.get(url+`/lobby/${lobbyId}`)
             .then(response => {
@@ -26,10 +26,10 @@ const GameScreen = ({ navigation, route }) => {
                 setLoading(false);
             });
 
-        // Clean up function to delete the lobby when the host leaves the page
+        // Clean up function to delete the lobby when the userName leaves the page
         return () => {
-            if (host) {
-                axios.post(url+'/lobby/delete', { host })
+            if (userName) {
+                axios.post(url+'/lobby/delete', { userName })
                     .then(response => {
                         console.log('Lobby deletion response:', response.data.message);
                     })
@@ -38,23 +38,9 @@ const GameScreen = ({ navigation, route }) => {
                     });
             }
         };
-    }, [host, lobbyId]);
+    }, [userName, lobbyId]);
 
-    const handlePlayerAction = (action) => {
-        axios.post(url+'/game/action', { lobbyId, playerId: host, action })
-            .then(response => {
-                console.log('Player action response:', response.data); // Add logging here
-                const { status, message, lobby } = response.data;
-                if (status === 'SUCCESS') {
-                    setLobby(lobby);
-                } else {
-                    console.log('Failed to process action:', message);
-                }
-            })
-            .catch(error => {
-                console.log('An error occurred while processing player action:', error);
-            });
-    };
+    
 
     if (loading) {
         return <ActivityIndicator size="large" color="#0000ff" />;
