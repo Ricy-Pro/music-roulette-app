@@ -7,7 +7,24 @@ const { spawn } = require('child_process');
 const {  sendEventsToAll: sendEventsToAll } = require('./Lobby');
 
 // In-memory store for libraries (this could also be on a per-lobby basis)
-let gameSessions = {};
+
+let gameSessions = {};  // Store session data in memory
+
+// Initialize game session data
+const initializeGameSession = (lobbyId, users) => {
+    const userLibraries = {};
+    users.forEach(user => {
+        userLibraries[user.name] = { songs: [], count: 3 };  // Fill with songs from fetchUserLibrary
+    });
+
+    gameSessions[lobbyId] = {
+        currentRound: 0,
+        totalRounds: users.length * 3,
+        userLibraries,
+        scores: {},  // Track scores per player
+        roundData: [],  // History of rounds
+    };
+};
 
 // Function to fetch library using Python script
 const fetchUserLibrary = (token) => {
@@ -52,6 +69,7 @@ const fetchUserLibrary = (token) => {
 };
 
 // Route to start the game
+// Route to start the game
 router.post('/start', async (req, res) => {
     const { lobbyId } = req.body;
 
@@ -63,51 +81,71 @@ router.post('/start', async (req, res) => {
 
         const participants = lobby.participants;
         const users = await User.find({ name: { $in: participants } });
-        const userCount = await User.countDocuments({ name: { $in: participants } });
-        const rounds = userCount*3;
-        console.log('User count:', userCount);
+        initializeGameSession(lobbyId, users);
 
-        // Create an object to temporarily store the libraries for each participant in memory
-        const userLibraries = {};
-
-        // Loop over each user and fetch their library using their token
-        
+        // Populate the user libraries
         for (const user of users) {
-            const token = user.authenticatorToken;  // No need to parse, it's already an object
-           
-            // Log token details (for debugging, if needed)
-            
-
-            const library = await fetchUserLibrary(token);  // Fetch the library from Python
-            userLibraries[user.name] = library;  // Associate library with the user
+            const library = await fetchUserLibrary(user.authenticatorToken);
+            gameSessions[lobbyId].userLibraries[user.name].songs = library;
         }
 
-        // Store the user libraries in memory associated with the lobby ID
-        gameSessions[lobbyId] = {
-            userLibraries,
-            rounds: [],  // Add additional game state data here as needed
-        };
-        //console.log('Game session data:', JSON.stringify(gameSessions, null, 2));
-        console.log('User1 Library:', userLibraries[users[0].name]);
-
-        // Mark the game as started
         lobby.gameStarted = true;
-        await lobby.save();  // Only save the `gameStarted` state to the database
-        
+        await lobby.save();
+
         const gameStartData = {
             status: 'SUCCESS',
             message: 'Game started',
             lobby
         };
         sendEventsToAll(gameStartData); 
-
+        
         res.json(gameStartData);
-    } catch (err) {
+        } catch (err) {
         console.error('Error starting game:', err);
         res.json({ status: 'FAILED', message: 'An error occurred', err });
-    }
+        }
 });
 
+router.get('/nextRound', async (req, res) => {
+    const { lobbyId } = req.query;
+    const session = gameSessions[lobbyId];
+
+    if (!session) return res.json({ status: 'FAILED', message: 'Session not found' });
+    if (session.currentRound >= session.totalRounds) return res.json({ status: 'COMPLETE', message: 'Game has ended' });
+
+    let chosenPlayer, chosenSong;
+    do {
+        chosenPlayer = Object.keys(session.userLibraries)[Math.floor(Math.random() * Object.keys(session.userLibraries).length)];
+        const playerLibrary = session.userLibraries[chosenPlayer];
+        chosenSong = playerLibrary.songs[Math.floor(Math.random() * playerLibrary.songs.length)];
+    } while (session.userLibraries[chosenPlayer].count <= 0);
+
+    session.userLibraries[chosenPlayer].count -= 1;
+    session.currentRound += 1;
+
+    const roundData = {
+        roundNumber: session.currentRound,
+        song: chosenSong,
+        players: Object.keys(session.userLibraries),
+        correctPlayer: chosenPlayer,
+    };
+    session.roundData.push(roundData);
+
+    res.json({ status: 'SUCCESS', roundData });
+});
+
+router.post('/vote', async (req, res) => {
+    const { lobbyId, player, voter } = req.body;
+    const session = gameSessions[lobbyId];
+    const roundData = session.roundData[session.currentRound - 1];  // Get latest round
+
+    if (roundData.correctPlayer === player) {
+        session.scores[voter] = (session.scores[voter] || 0) + 1;  // Award point
+        res.json({ status: 'SUCCESS', message: 'Correct guess!', score: session.scores[voter] });
+    } else {
+        res.json({ status: 'FAILED', message: 'Incorrect guess' });
+    }
+});
 
 
 

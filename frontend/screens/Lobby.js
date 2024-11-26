@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Text, Alert } from 'react-native';
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledButton, ButtonText } from '../components/style';
 
-const url = 'https://221d-2a02-2f0e-d09-a600-292d-1ca3-c17c-2aca.ngrok-free.app';
+const url = 'https://8919-2a02-2f0e-3904-3900-e0f8-a8c2-f7cb-b776.ngrok-free.app';
 
 const Lobby = ({ navigation, route }) => {
     const { lobbyId, userName, host } = route.params; // Extract userName and host

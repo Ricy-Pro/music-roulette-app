@@ -1,75 +1,76 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, ActivityIndicator, FlatList, Button, Alert } from 'react-native';
 import axios from 'axios';
 import { StyledContainer, InnerContainer, PageTitle, SubTitle, StyledButton, ButtonText } from '../components/style';
 
 const GameScreen = ({ navigation, route }) => {
     const { lobbyId, userName } = route.params;
     const [loading, setLoading] = useState(true);
-    const [lobby, setLobby] = useState(null);
-    url='https://221d-2a02-2f0e-d09-a600-292d-1ca3-c17c-2aca.ngrok-free.app'
+    const [roundData, setRoundData] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(30);
+
+    const url = 'https://8919-2a02-2f0e-3904-3900-e0f8-a8c2-f7cb-b776.ngrok-free.app';
+
+    // Load the game and start rounds
     useEffect(() => {
-        axios.get(url+`/lobby/${lobbyId}`)
-            .then(response => {
-                console.log('Lobby data response:', response.data); // Add logging here
-                const { status, lobby } = response.data;
-                if (status === 'SUCCESS') {
-                    setLobby(lobby);
-                    
-                } else {
-                    console.log('Failed to fetch lobby data:', response.data.message);
-                }
-                setLoading(false);
-            })
-            .catch(error => {
-                console.log('An error occurred while fetching lobby data:', error);
-                setLoading(false);
-            });
+        fetchNextRound();
+    }, []);
 
-        // Clean up function to delete the lobby when the userName leaves the page
-        return () => {
-            if (userName) {
-                axios.post(url+'/lobby/delete', { userName })
-                    .then(response => {
-                        console.log('Lobby deletion response:', response.data.message);
-                    })
-                    .catch(error => {
-                        console.log('An error occurred while deleting the lobby:', error);
-                    });
+    // Timer logic for each round
+    useEffect(() => {
+        if (timeLeft <= 0) fetchNextRound();
+        const timer = setInterval(() => setTimeLeft(timeLeft - 1), 1000);
+        return () => clearInterval(timer);
+    }, [timeLeft]);
+
+    const fetchNextRound = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${url}/game/nextRound?lobbyId=${lobbyId}`);
+            if (response.data.status === 'SUCCESS') {
+                setRoundData(response.data.roundData);
+                setTimeLeft(30);  // Reset timer
+            } else if (response.data.status === 'COMPLETE') {
+                Alert.alert('Game Over', 'Thanks for playing!');
+                navigation.goBack();
             }
-        };
-    }, [userName, lobbyId]);
-
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching next round:', error);
+        }
+    };
     
+    const handleVote = async (player) => {
+        try {
+            const response = await axios.post(`${url}/game/vote`, { lobbyId, player, voter: userName });
+            if (response.data.status === 'SUCCESS') {
+                Alert.alert('Vote Registered!', response.data.message);
+            } else {
+                Alert.alert('Incorrect Guess', 'Try again next round!');
+            }
+        } catch (error) {
+            console.error('Error submitting vote:', error);
+        }
+    };
 
-    if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
-    }
-
-    if (!lobby) {
-        return (
-            <StyledContainer>
-                <InnerContainer>
-                    <PageTitle>Error</PageTitle>
-                    <SubTitle>Failed to load lobby data.</SubTitle>
-                </InnerContainer>
-            </StyledContainer>
-        );
-    }
+    if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
 
     return (
         <StyledContainer>
             <InnerContainer>
-                <PageTitle>Game: {lobbyId}</PageTitle>
-                <SubTitle>Participants:</SubTitle>
+                <PageTitle>Round {roundData?.roundNumber}</PageTitle>
+                <SubTitle>Who chose this song?</SubTitle>
+                <Text>🎵 {roundData?.song.title} - {roundData?.song.artist}</Text>
+                <SubTitle>Time left: {timeLeft}s</SubTitle>
                 <FlatList
-                    data={lobby.participants}
+                    data={roundData?.players || []}
                     keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item }) => <Text>{item}</Text>}
+                    renderItem={({ item }) => (
+                        <StyledButton onPress={() => handleVote(item)}>
+                            <ButtonText>{item}</ButtonText>
+                        </StyledButton>
+                    )}
                 />
-                <StyledButton onPress={() => handlePlayerAction('exampleAction')}>
-                    <ButtonText>Perform Action</ButtonText>
-                </StyledButton>
             </InnerContainer>
         </StyledContainer>
     );
